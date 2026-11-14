@@ -1,11 +1,11 @@
-# ⚡ VELO VPN (by VeloMusic)
+# ⚡ VELO VPN
 
 <p align="center">
   <img src="assets/hero_banner.png" alt="VELO VPN Hero Banner" width="850" />
 </p>
 
 <p align="center">
-  <a href="https://github.com/mhfa1380/velomusic/releases/latest"><img src="https://img.shields.io/badge/Release-v1.0.0-00F5FF?style=for-the-badge&logo=github" alt="Release" /></a>
+  <a href="https://github.com/mhfa1380/velovpn/releases/latest"><img src="https://img.shields.io/badge/Release-v1.0.0-00F5FF?style=for-the-badge&logo=github" alt="Release" /></a>
   <a href="#"><img src="https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011%20x64-7B2CBF?style=for-the-badge&logo=windows" alt="Platform" /></a>
   <a href="#"><img src="https://img.shields.io/badge/Core-Sing--Box%20%2B%20Hiddify-FF007A?style=for-the-badge" alt="Core" /></a>
   <a href="#"><img src="https://img.shields.io/badge/UI-Modern%20Flutter-10B981?style=for-the-badge&logo=flutter" alt="UI" /></a>
@@ -16,10 +16,10 @@
 
 ## 🌟 Overview
 
-**VELO VPN** is a next-generation, high-performance VPN and proxy client engineered for zero-friction censorship circumvention, peak security, and maximum speed. Built upon the modern **Hiddify / Sing-Box** foundation with custom **VeloMusic** styling, it combines an ultra-modern responsive dark interface with battle-tested routing and tunnel resilience.
+**VELO VPN** is a next-generation, high-performance VPN and proxy client engineered for zero-friction censorship circumvention, peak security, and maximum speed. Built upon the modern **Hiddify / Sing-Box** foundation with custom **VELO** styling, it combines an ultra-modern responsive dark interface with battle-tested routing and tunnel resilience.
 
 ### 📥 Instant Download
-👉 **[Download Official Installer: VELO_VPN_Setup.exe](https://github.com/mhfa1380/velomusic/releases/download/v1.0.0/VELO_VPN_Setup.exe)**
+👉 **[Download Official Installer: VELO_VPN_Setup.exe](https://github.com/mhfa1380/velovpn/releases/download/v1.0.0/VELO_VPN_Setup.exe)**
 
 ---
 
@@ -48,7 +48,7 @@
 ## ⚡ Quick Start
 
 1. **Download & Install:**
-   - Grab `VELO_VPN_Setup.exe` from [Releases](https://github.com/mhfa1380/velomusic/releases/latest).
+   - Grab `VELO_VPN_Setup.exe` from [Releases](https://github.com/mhfa1380/velovpn/releases/latest).
    - Run the installer and click **Install Now**.
 2. **Launch:**
    - Open **VELO VPN** from your Desktop or Start Menu.
