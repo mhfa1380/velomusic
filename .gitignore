@@ -1,0 +1,10 @@
+# Binaries & Payload
+*.zip
+*.log
+*.tmp
+.sentry-native/
+CrashReport/
+
+# Build outputs
+bin/
+obj/

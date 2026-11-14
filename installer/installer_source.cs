@@ -1,0 +1,330 @@
+using System;
+using System.IO;
+using System.IO.Compression;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Reflection;
+using System.Diagnostics;
+using System.Windows.Forms;
+using System.Threading;
+
+namespace VeloVpnInstaller
+{
+    public class ModernInstaller : Form
+    {
+        private PictureBox picLogo;
+        private Label lblTitle;
+        private Label lblSubtitle;
+        private Label lblBadge;
+        private Panel pnlCard;
+        private Label lblPath;
+        private TextBox txtPath;
+        private Button btnBrowse;
+        private CheckBox chkDesktop;
+        private CheckBox chkStartup;
+        private CheckBox chkLaunch;
+        private ProgressBar prgBar;
+        private Label lblStatus;
+        private Button btnInstall;
+        private Panel pnlFeatures;
+        private bool isDone = false;
+        private string installedExe = "";
+
+        public ModernInstaller()
+        {
+            InitializeComponent();
+        }
+
+        private void InitializeComponent()
+        {
+            this.Text = "VELO VPN - Setup Wizard";
+            this.Size = new Size(640, 560);
+            this.MinimumSize = new Size(640, 560);
+            this.StartPosition = FormStartPosition.CenterScreen;
+            this.FormBorderStyle = FormBorderStyle.FixedSingle;
+            this.MaximizeBox = false;
+            this.BackColor = Color.FromArgb(11, 15, 25); // Ultra dark slate/obsidian
+            this.ForeColor = Color.White;
+            this.Font = new Font("Segoe UI", 9.5F, FontStyle.Regular);
+
+            // Load window icon from embedded resource
+            var asm = Assembly.GetExecutingAssembly();
+            try {
+                using (Stream icoStream = asm.GetManifestResourceStream("velo_logo.ico")) {
+                    if (icoStream != null) this.Icon = new Icon(icoStream);
+                }
+            } catch {}
+
+            // Header Section
+            picLogo = new PictureBox();
+            picLogo.Size = new Size(68, 68);
+            picLogo.Location = new Point(32, 28);
+            picLogo.SizeMode = PictureBoxSizeMode.Zoom;
+            try {
+                using (Stream imgStream = asm.GetManifestResourceStream("velo_logo.png")) {
+                    if (imgStream != null) picLogo.Image = Image.FromStream(imgStream);
+                }
+            } catch {}
+            this.Controls.Add(picLogo);
+
+            lblTitle = new Label();
+            lblTitle.Text = "VELO VPN";
+            lblTitle.Font = new Font("Segoe UI", 19F, FontStyle.Bold);
+            lblTitle.ForeColor = Color.FromArgb(0, 242, 254); // Electric Cyan
+            lblTitle.Location = new Point(112, 24);
+            lblTitle.AutoSize = true;
+            this.Controls.Add(lblTitle);
+
+            lblBadge = new Label();
+            lblBadge.Text = "v1.0.0 STABLE";
+            lblBadge.Font = new Font("Segoe UI", 7.5F, FontStyle.Bold);
+            lblBadge.ForeColor = Color.FromArgb(168, 85, 247); // Neon Purple
+            lblBadge.BackColor = Color.FromArgb(30, 27, 75);
+            lblBadge.Location = new Point(255, 32);
+            lblBadge.Padding = new Padding(4, 2, 4, 2);
+            lblBadge.AutoSize = true;
+            this.Controls.Add(lblBadge);
+
+            lblSubtitle = new Label();
+            lblSubtitle.Text = "Next-Gen Resilient Network Client with Anti-Crash Kernel";
+            lblSubtitle.Font = new Font("Segoe UI", 9.5F, FontStyle.Regular);
+            lblSubtitle.ForeColor = Color.FromArgb(148, 163, 184); // Slate 400
+            lblSubtitle.Location = new Point(114, 62);
+            lblSubtitle.Size = new Size(480, 24);
+            this.Controls.Add(lblSubtitle);
+
+            // Feature Badges Container
+            pnlFeatures = new Panel();
+            pnlFeatures.Location = new Point(32, 112);
+            pnlFeatures.Size = new Size(560, 36);
+            pnlFeatures.BackColor = Color.FromArgb(17, 24, 39);
+            this.Controls.Add(pnlFeatures);
+
+            AddFeaturePill(pnlFeatures, "⚡ Anti-Crash Core", 8, Color.FromArgb(56, 189, 248));
+            AddFeaturePill(pnlFeatures, "🇮🇷 Smart Bypass", 145, Color.FromArgb(74, 222, 128));
+            AddFeaturePill(pnlFeatures, "✈️ Telegram Auto-Sync", 270, Color.FromArgb(192, 132, 252));
+            AddFeaturePill(pnlFeatures, "🔒 Dual VPN+Proxy", 425, Color.FromArgb(251, 146, 60));
+
+            // Destination Path Card
+            pnlCard = new Panel();
+            pnlCard.Location = new Point(32, 164);
+            pnlCard.Size = new Size(560, 96);
+            pnlCard.BackColor = Color.FromArgb(20, 28, 46);
+            this.Controls.Add(pnlCard);
+
+            lblPath = new Label();
+            lblPath.Text = "Installation Folder";
+            lblPath.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblPath.ForeColor = Color.FromArgb(203, 213, 225);
+            lblPath.Location = new Point(16, 14);
+            lblPath.AutoSize = true;
+            pnlCard.Controls.Add(lblPath);
+
+            txtPath = new TextBox();
+            txtPath.Text = @"C:\VELO_VPN";
+            txtPath.Location = new Point(16, 42);
+            txtPath.Size = new Size(420, 26);
+            txtPath.BackColor = Color.FromArgb(11, 15, 25);
+            txtPath.ForeColor = Color.White;
+            txtPath.BorderStyle = BorderStyle.FixedSingle;
+            pnlCard.Controls.Add(txtPath);
+
+            btnBrowse = new Button();
+            btnBrowse.Text = "Browse...";
+            btnBrowse.Location = new Point(446, 40);
+            btnBrowse.Size = new Size(96, 29);
+            btnBrowse.BackColor = Color.FromArgb(30, 41, 59);
+            btnBrowse.ForeColor = Color.White;
+            btnBrowse.FlatStyle = FlatStyle.Flat;
+            btnBrowse.FlatAppearance.BorderColor = Color.FromArgb(51, 65, 85);
+            btnBrowse.Cursor = Cursors.Hand;
+            btnBrowse.Click += (s, e) => {
+                FolderBrowserDialog fbd = new FolderBrowserDialog();
+                fbd.Description = "Select destination folder for VELO VPN:";
+                if (fbd.ShowDialog() == DialogResult.OK) txtPath.Text = fbd.SelectedPath;
+            };
+            pnlCard.Controls.Add(btnBrowse);
+
+            // Options Checkboxes
+            chkDesktop = new CheckBox();
+            chkDesktop.Text = "Create Desktop and Start Menu shortcuts";
+            chkDesktop.Checked = true;
+            chkDesktop.Location = new Point(36, 276);
+            chkDesktop.Size = new Size(550, 24);
+            chkDesktop.ForeColor = Color.FromArgb(226, 232, 240);
+            this.Controls.Add(chkDesktop);
+
+            chkStartup = new CheckBox();
+            chkStartup.Text = "Run automatically on Windows startup (quiet in system tray)";
+            chkStartup.Checked = true;
+            chkStartup.Location = new Point(36, 304);
+            chkStartup.Size = new Size(550, 24);
+            chkStartup.ForeColor = Color.FromArgb(226, 232, 240);
+            this.Controls.Add(chkStartup);
+
+            chkLaunch = new CheckBox();
+            chkLaunch.Text = "Launch VELO VPN immediately after installation";
+            chkLaunch.Checked = true;
+            chkLaunch.Location = new Point(36, 332);
+            chkLaunch.Size = new Size(550, 24);
+            chkLaunch.ForeColor = Color.FromArgb(226, 232, 240);
+            this.Controls.Add(chkLaunch);
+
+            // Progress Bar & Status
+            prgBar = new ProgressBar();
+            prgBar.Location = new Point(32, 376);
+            prgBar.Size = new Size(560, 16);
+            prgBar.Visible = false;
+            this.Controls.Add(prgBar);
+
+            lblStatus = new Label();
+            lblStatus.Text = "Ready to install. Click 'Install VELO VPN' to proceed.";
+            lblStatus.ForeColor = Color.FromArgb(148, 163, 184);
+            lblStatus.Location = new Point(32, 400);
+            lblStatus.Size = new Size(560, 24);
+            this.Controls.Add(lblStatus);
+
+            // Install Button
+            btnInstall = new Button();
+            btnInstall.Text = "Install VELO VPN";
+            btnInstall.Font = new Font("Segoe UI", 11.5F, FontStyle.Bold);
+            btnInstall.Location = new Point(32, 436);
+            btnInstall.Size = new Size(560, 48);
+            btnInstall.BackColor = Color.FromArgb(0, 242, 254); // Electric Cyan
+            btnInstall.ForeColor = Color.FromArgb(11, 15, 25);
+            btnInstall.FlatStyle = FlatStyle.Flat;
+            btnInstall.FlatAppearance.BorderSize = 0;
+            btnInstall.Cursor = Cursors.Hand;
+            btnInstall.Click += BtnInstall_Click;
+            this.Controls.Add(btnInstall);
+        }
+
+        private void AddFeaturePill(Panel parent, string text, int x, Color textColor)
+        {
+            Label lbl = new Label();
+            lbl.Text = text;
+            lbl.Font = new Font("Segoe UI", 7.8F, FontStyle.Bold);
+            lbl.ForeColor = textColor;
+            lbl.Location = new Point(x, 8);
+            lbl.AutoSize = true;
+            parent.Controls.Add(lbl);
+        }
+
+        private void BtnInstall_Click(object sender, EventArgs e)
+        {
+            if (isDone)
+            {
+                if (chkLaunch.Checked && File.Exists(installedExe))
+                {
+                    Process.Start(installedExe);
+                }
+                this.Close();
+                return;
+            }
+
+            btnInstall.Enabled = false;
+            btnBrowse.Enabled = false;
+            txtPath.Enabled = false;
+            prgBar.Visible = true;
+            prgBar.Style = ProgressBarStyle.Marquee;
+            lblStatus.Text = "Extracting components and configuring optimized core...";
+            lblStatus.ForeColor = Color.FromArgb(56, 189, 248);
+
+            string targetDir = txtPath.Text.Trim();
+            bool makeShortcuts = chkDesktop.Checked;
+            bool runStartup = chkStartup.Checked;
+
+            Thread t = new Thread(() => {
+                try {
+                    if (!Directory.Exists(targetDir)) Directory.CreateDirectory(targetDir);
+
+                    // Extract embedded payload
+                    var asm = Assembly.GetExecutingAssembly();
+                    using (Stream s = asm.GetManifestResourceStream("velo_app.zip"))
+                    {
+                        if (s != null)
+                        {
+                            string tempZip = Path.Combine(Path.GetTempPath(), "velo_setup_temp.zip");
+                            using (FileStream fs = new FileStream(tempZip, FileMode.Create))
+                            {
+                                s.CopyTo(fs);
+                            }
+                            ZipFile.ExtractToDirectory(tempZip, targetDir);
+                            try { File.Delete(tempZip); } catch {}
+                        }
+                    }
+
+                    installedExe = Path.Combine(targetDir, "VELO VPN.exe");
+                    if (!File.Exists(installedExe))
+                    {
+                        installedExe = Path.Combine(targetDir, "Hiddify.exe");
+                    }
+                    string iconPath = Path.Combine(targetDir, "velo_logo.ico");
+
+                    if (makeShortcuts)
+                    {
+                        string desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+                        CreateShortcut(Path.Combine(desktop, "VELO VPN.lnk"), installedExe, targetDir, iconPath, "");
+
+                        string programs = Environment.GetFolderPath(Environment.SpecialFolder.Programs);
+                        string appMenu = Path.Combine(programs, "VELO VPN");
+                        if (!Directory.Exists(appMenu)) Directory.CreateDirectory(appMenu);
+                        CreateShortcut(Path.Combine(appMenu, "VELO VPN.lnk"), installedExe, targetDir, iconPath, "");
+                    }
+
+                    if (runStartup)
+                    {
+                        string startup = Environment.GetFolderPath(Environment.SpecialFolder.Startup);
+                        CreateShortcut(Path.Combine(startup, "VELO VPN.lnk"), installedExe, targetDir, iconPath, "");
+                    }
+
+                    this.Invoke((MethodInvoker)delegate {
+                        prgBar.Style = ProgressBarStyle.Blocks;
+                        prgBar.Value = 100;
+                        lblStatus.Text = "Installation completed successfully! VELO VPN is ready.";
+                        lblStatus.ForeColor = Color.FromArgb(74, 222, 128); // Emerald Green
+                        btnInstall.Text = "Launch VELO VPN & Finish";
+                        btnInstall.BackColor = Color.FromArgb(74, 222, 128);
+                        btnInstall.Enabled = true;
+                        isDone = true;
+                    });
+                }
+                catch (Exception ex)
+                {
+                    this.Invoke((MethodInvoker)delegate {
+                        prgBar.Visible = false;
+                        lblStatus.Text = "Installation error: " + ex.Message;
+                        lblStatus.ForeColor = Color.FromArgb(248, 113, 113);
+                        btnInstall.Enabled = true;
+                    });
+                }
+            });
+            t.IsBackground = true;
+            t.Start();
+        }
+
+        private static void CreateShortcut(string shortcutPath, string target, string workingDir, string icon, string args)
+        {
+            try
+            {
+                Type shellType = Type.GetTypeFromProgID("WScript.Shell");
+                dynamic shell = Activator.CreateInstance(shellType);
+                dynamic shortcut = shell.CreateShortcut(shortcutPath);
+                shortcut.TargetPath = target;
+                shortcut.WorkingDirectory = workingDir;
+                if (!string.IsNullOrEmpty(args)) shortcut.Arguments = args;
+                if (!string.IsNullOrEmpty(icon) && File.Exists(icon)) shortcut.IconLocation = icon + ",0";
+                shortcut.Save();
+            }
+            catch {}
+        }
+
+        [STAThread]
+        static void Main()
+        {
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+            Application.Run(new ModernInstaller());
+        }
+    }
+}
