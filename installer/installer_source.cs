@@ -256,6 +256,36 @@ namespace VeloVpnInstaller
                     foreach (var p in Process.GetProcessesByName("VELO VPN")) { try { p.Kill(); p.WaitForExit(1000); } catch {} }
                     foreach (var p in Process.GetProcessesByName("Hiddify")) { try { p.Kill(); p.WaitForExit(1000); } catch {} }
 
+                    // Free port 17078 if occupied by any zombie process
+                    try {
+                        ProcessStartInfo psi = new ProcessStartInfo("netstat", "-ano") { RedirectStandardOutput = true, UseShellExecute = false, CreateNoWindow = true };
+                        using (var pNet = Process.Start(psi)) {
+                            string netOut = pNet.StandardOutput.ReadToEnd();
+                            foreach (string line in netOut.Split('\n')) {
+                                if (line.Contains(":17078 ") && line.Contains("LISTENING")) {
+                                    string[] parts = line.Trim().Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                                    int conflictPid;
+                                    if (parts.Length > 0 && int.TryParse(parts[parts.Length - 1], out conflictPid)) {
+                                        try { Process.GetProcessById(conflictPid).Kill(); } catch {}
+                                    }
+                                }
+                            }
+                        }
+                    } catch {}
+
+                    // Clean conflicting legacy autorun keys
+                    try {
+                        using (var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", true))
+                        {
+                            if (key != null)
+                            {
+                                if (key.GetValue("hiddify") != null) key.DeleteValue("hiddify", false);
+                                if (key.GetValue("nekoray") != null) key.DeleteValue("nekoray", false);
+                                if (key.GetValue("nekobox") != null) key.DeleteValue("nekobox", false);
+                            }
+                        }
+                    } catch {}
+
                     if (!Directory.Exists(targetDir)) Directory.CreateDirectory(targetDir);
 
                     // Extract embedded payload with safe config preservation
