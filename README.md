@@ -18,8 +18,13 @@
 
 **VELO VPN** is a next-generation, high-performance VPN and proxy client engineered for zero-friction censorship circumvention, peak security, and maximum speed. Built upon the modern **Hiddify / Sing-Box** foundation with custom **VELO** styling, it combines an ultra-modern responsive dark interface with battle-tested routing and tunnel resilience.
 
-### 📥 Instant Download
-👉 **[Download Official Installer: VELO_VPN_Setup.exe](https://github.com/mhfa1380/velovpn/releases/download/v1.0.0/VELO_VPN_Setup.exe)**
+### 📥 Downloads & Releases
+
+| Package | Format | Architecture | Download Link |
+| :--- | :---: | :---: | :--- |
+| **VELO VPN Setup (Recommended)** | Standalone Installer (`.exe`) | Windows 10/11 x64 | [Download VELO_VPN_Setup.exe](https://github.com/mhfa1380/velovpn/releases/download/v1.0.0/VELO_VPN_Setup.exe) |
+| **velovpn Setup** | Direct Setup (`.exe`) | Windows 10/11 x64 | [Download velovpn_setup.exe](https://github.com/mhfa1380/velovpn/releases/download/v1.0.0/velovpn_setup.exe) |
+| **velovpn Portable** | Portable Archive (`.zip`) | Windows 10/11 x64 | [Download velovpn_portable.zip](https://github.com/mhfa1380/velovpn/releases/download/v1.0.0/velovpn_portable.zip) |
 
 ---
 
