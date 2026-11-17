@@ -82,7 +82,7 @@ namespace VeloVpnInstaller
             this.Controls.Add(lblTitle);
 
             lblBadge = new Label();
-            lblBadge.Text = isUpdateMode ? "UPDATE READY" : "v1.0.0 STABLE";
+            lblBadge.Text = isUpdateMode ? "UPDATE READY" : "v1.0.1 STABLE";
             lblBadge.Font = new Font("Segoe UI", 7.5F, FontStyle.Bold);
             lblBadge.ForeColor = isUpdateMode ? Color.FromArgb(52, 211, 153) : Color.FromArgb(168, 85, 247);
             lblBadge.BackColor = isUpdateMode ? Color.FromArgb(6, 78, 59) : Color.FromArgb(30, 27, 75);
@@ -110,8 +110,8 @@ namespace VeloVpnInstaller
 
             AddFeaturePill(pnlFeatures, "⚡ Sing-Box Core", 8, Color.FromArgb(56, 189, 248));
             AddFeaturePill(pnlFeatures, "🇮🇷 Smart Iran Bypass", 145, Color.FromArgb(74, 222, 128));
-            AddFeaturePill(pnlFeatures, "✈️ 1-Click Telegram Proxy", 285, Color.FromArgb(192, 132, 252));
-            AddFeaturePill(pnlFeatures, "🛡️ Safe Config Guard", 435, Color.FromArgb(251, 146, 60));
+            AddFeaturePill(pnlFeatures, "🛡️ TUN Mode Enabled", 295, Color.FromArgb(192, 132, 252));
+            AddFeaturePill(pnlFeatures, "🔒 Safe Config Guard", 435, Color.FromArgb(251, 146, 60));
 
             // Destination Path Card
             pnlCard = new Panel();
@@ -231,7 +231,15 @@ namespace VeloVpnInstaller
             {
                 if (chkLaunch.Checked && File.Exists(installedExe))
                 {
-                    try { Process.Start(installedExe); } catch {}
+                    try {
+                        ProcessStartInfo psi = new ProcessStartInfo(installedExe) {
+                            UseShellExecute = true,
+                            Verb = "runas"
+                        };
+                        Process.Start(psi);
+                    } catch {
+                        try { Process.Start(installedExe); } catch {}
+                    }
                 }
                 this.Close();
                 return;
@@ -347,6 +355,32 @@ namespace VeloVpnInstaller
 
                     string iconPath = Path.Combine(targetDir, "velo_logo.ico");
 
+                    // Ensure VPN (TUN) mode is enabled in shared_preferences
+                    try {
+                        string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                        string[] targetDirs = new string[] {
+                            Path.Combine(appData, "velovpn", "hiddify"),
+                            Path.Combine(appData, "Hiddify", "hiddify")
+                        };
+                        string defaultPrefs = "{\"portable.preferences_version\":4,\"portable.region\":\"ir\",\"portable.locale\":\"fa\",\"portable.intro_completed\":true,\"portable.silent_start\":false,\"portable.service-mode\":\"vpn\",\"portable.extra-security-profile-id\":\"399c69f2-6022-4e19-a83f-d47ee80bcd6c\",\"portable.unblocker-profile-id\":\"399c69f2-6022-4e19-a83f-d47ee80bcd6c\",\"portable.theme_mode\":\"dark\",\"portable.theme\":\"dark\",\"portable.true_black\":true}";
+                        foreach (var d in targetDirs) {
+                            if (!Directory.Exists(d)) Directory.CreateDirectory(d);
+                            string pFile = Path.Combine(d, "shared_preferences.json");
+                            if (!File.Exists(pFile)) {
+                                File.WriteAllText(pFile, defaultPrefs);
+                            } else {
+                                string content = File.ReadAllText(pFile);
+                                if (!content.Contains("\"portable.service-mode\":\"vpn\"")) {
+                                    content = content.Replace("\"portable.service-mode\":\"proxy\"", "\"portable.service-mode\":\"vpn\"");
+                                    if (!content.Contains("\"portable.service-mode\"")) {
+                                        content = content.TrimEnd('}') + ",\"portable.service-mode\":\"vpn\"}";
+                                    }
+                                    File.WriteAllText(pFile, content);
+                                }
+                            }
+                        }
+                    } catch {}
+
                     if (makeShortcuts)
                     {
                         string desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
@@ -404,12 +438,24 @@ namespace VeloVpnInstaller
                 if (!string.IsNullOrEmpty(args)) shortcut.Arguments = args;
                 if (!string.IsNullOrEmpty(icon) && File.Exists(icon)) shortcut.IconLocation = icon + ",0";
                 shortcut.Save();
+
+                // Set SLDF_RUNAS_USER (byte 21 |= 0x20) so shortcut requests Administrator elevation
+                try
+                {
+                    byte[] bytes = File.ReadAllBytes(shortcutPath);
+                    if (bytes.Length > 21)
+                    {
+                        bytes[21] = (byte)(bytes[21] | 0x20);
+                        File.WriteAllBytes(shortcutPath, bytes);
+                    }
+                }
+                catch {}
             }
             catch {}
         }
 
         [STAThread]
-        static void Main()
+        public static void Main()
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
